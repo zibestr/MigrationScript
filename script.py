@@ -3,9 +3,12 @@ author: Danila Yashin
 """
 import os
 
-import sqlalchemy
 import pandas as pd
+import sqlalchemy
 from dotenv import load_dotenv
+from tqdm import tqdm
+
+load_dotenv()
 
 
 def make_original_connection_string() -> str:
@@ -14,7 +17,6 @@ def make_original_connection_string() -> str:
     Returns:
         str: string to connect to PostgreSQL database
     """
-    load_dotenv()
     user = os.getenv('USER_ORIGINAL')
     password = os.getenv('PASSWORD_ORIGINAL')
     host = os.getenv('HOST_ORIGINAL')
@@ -29,7 +31,6 @@ def make_new_connection_string() -> str:
     Returns:
         str: string to connect to PostgreSQL database
     """
-    load_dotenv()
     user = os.getenv('USER_NEW')
     password = os.getenv('PASSWORD_NEW')
     host = os.getenv('HOST_NEW')
@@ -56,7 +57,10 @@ def extract_script(filename: str) -> str:
 if __name__ == '__main__':
     db_orig = sqlalchemy.create_engine(make_original_connection_string())
     db_new = sqlalchemy.create_engine(make_new_connection_string())
-    for script_filename in os.listdir('scripts'):
+    print('Load scripts')
+    for script_filename in tqdm(os.listdir('scripts')):
         sql = extract_script(script_filename)
         df = pd.read_sql(sql, db_orig)
-        df.to_sql(script_filename, db_new, if_exists='replace')
+        df.to_sql(script_filename, db_new,
+                  if_exists='replace', index=False)
+    print('Finish!')
