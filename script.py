@@ -55,9 +55,11 @@ def extract_script(filename: str) -> str:
 
 
 if __name__ == '__main__':
+    print('Initializing original database...')
     db_orig = sqlalchemy.create_engine(make_original_connection_string())
+    print('Initializing new database...')
     db_new = sqlalchemy.create_engine(make_new_connection_string())
-    print('Load scripts')
+    print('Load scripts...')
     for script_filename in tqdm(os.listdir('scripts')):
         sql = extract_script(script_filename)
         df = pd.read_sql(sql, db_orig)
