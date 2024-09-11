@@ -22,3 +22,4 @@ pip install -r requirements.txt
 ```bash
 python3 script.py
 ```
+**SQL скрипты складывать в папку scripts!**
