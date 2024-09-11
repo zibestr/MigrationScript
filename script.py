@@ -63,6 +63,6 @@ if __name__ == '__main__':
     for script_filename in tqdm(os.listdir('scripts')):
         sql = extract_script(script_filename)
         df = pd.read_sql(sql, db_orig)
-        df.to_sql(script_filename, db_new,
+        df.to_sql(script_filename.split('.')[0], db_new,
                   if_exists='replace', index=False)
     print('Finish!')
