@@ -29,14 +29,15 @@ def make_new_connection_string() -> str:
     """Generate a connection string
 
     Returns:
-        str: string to connect to PostgreSQL database
+        str: string to connect to MySQL database
     """
     user = os.getenv('USER_NEW')
     password = os.getenv('PASSWORD_NEW')
     host = os.getenv('HOST_NEW')
     port = os.getenv('PORT_NEW')
     db_name = os.getenv('DB_NAME_NEW')
-    return f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{db_name}'
+    # return f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{db_name}'
+    return f'mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}'
 
 
 def extract_script(filename: str) -> str:
@@ -60,15 +61,23 @@ if __name__ == '__main__':
     print('Initializing new database...')
     db_new = sqlalchemy.create_engine(make_new_connection_string())
     print('Load scripts...')
-    for script_filename in tqdm(os.listdir('scripts')):
+    list_ = tqdm(os.listdir('scripts'))
+    for script_filename in list_:
+        list_.set_description(script_filename)
         sql = extract_script(script_filename)
         with db_orig.connect() as connection:
+            if script_filename.count('.') == 2:
+                id_col = script_filename.split('.')[1]
+            else:
+                id_col = 'id'
             tran = connection.begin()
-            df = pd.read_sql(sql, connection)
+            df = pd.read_sql(sql, connection,
+                             index_col=id_col)
             tran.commit()
         with db_new.connect() as connection:
             tran = connection.begin()
             df.to_sql(script_filename.split('.')[0], db_new,
-                      if_exists='replace', index=False)
+                      if_exists='replace', index_label=id_col,
+                      method='multi')
             tran.commit()
     print('Finish!')
