@@ -36,8 +36,8 @@ def make_new_connection_string() -> str:
     host = os.getenv('HOST_NEW')
     port = os.getenv('PORT_NEW')
     db_name = os.getenv('DB_NAME_NEW')
-    # return f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{db_name}'
-    return f'mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}'
+    return f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{db_name}'
+    # return f'mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}'
 
 
 def extract_script(filename: str) -> str:
@@ -70,12 +70,12 @@ if __name__ == '__main__':
         list_.set_description('connecting to original database '
                               f'[{script_filename}]')
         with db_orig.connect() as connection:
-            list_.set_description(f'select from {table_name}')
             if script_filename.count('.') == 2:
                 id_col = script_filename.split('.')[1]
             else:
                 id_col = 'id'
             tran = connection.begin()
+            list_.set_description(f'select from {table_name}')
             df = pd.read_sql_query(sql, connection,
                                    index_col=id_col)
             tran.commit()
@@ -86,6 +86,6 @@ if __name__ == '__main__':
             tran = connection.begin()
             df.to_sql(table_name, db_new,
                       if_exists='replace', index_label=id_col,
-                      method='multi')
+                      chunksize=500000)
             tran.commit()
     print('Finish!')
