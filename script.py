@@ -63,20 +63,28 @@ if __name__ == '__main__':
     print('Load scripts...')
     list_ = tqdm(os.listdir('scripts'))
     for script_filename in list_:
+        table_name = script_filename.split('.')[0]
         list_.set_description(script_filename)
         sql = extract_script(script_filename)
+
+        list_.set_description('connecting to original database '
+                              f'[{script_filename}]')
         with db_orig.connect() as connection:
+            list_.set_description(f'select from {table_name}')
             if script_filename.count('.') == 2:
                 id_col = script_filename.split('.')[1]
             else:
                 id_col = 'id'
             tran = connection.begin()
-            df = pd.read_sql(sql, connection,
-                             index_col=id_col)
+            df = pd.read_sql_query(sql, connection,
+                                   index_col=id_col)
             tran.commit()
+        list_.set_description('connecting to new database '
+                              f'[{script_filename}]')
         with db_new.connect() as connection:
+            list_.set_description(f'insert into {table_name}')
             tran = connection.begin()
-            df.to_sql(script_filename.split('.')[0], db_new,
+            df.to_sql(table_name, db_new,
                       if_exists='replace', index_label=id_col,
                       method='multi')
             tran.commit()
